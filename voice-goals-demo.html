@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Goals Input Demo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    
+    button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 0 10px;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #3367d6;
+    }
+    
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+      height: 20px;
+    }
+    
+    .recording {
+      color: #ea4335;
+    }
+    
+    .results {
+      margin-top: 20px;
+    }
+    
+    .transcript, .goals, .habit-stack {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+    }
+    
+    .transcript p, .goals p, .habit-stack p {
+      margin: 5px 0;
+    }
+    
+    .interim {
+      color: #666;
+      font-style: italic;
+    }
+    
+    h3 {
+      color: #4285f4;
+      margin-bottom: 10px;
+    }
+    
+    ul {
+      padding-left: 20px;
+    }
+    
+    li {
+      margin-bottom: 5px;
+    }
+    
+    .error {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 15px 0;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4285f4;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .audio-controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    
+    .audio-controls button {
+      background-color: #34a853;
+    }
+    
+    .audio-controls button:hover {
+      background-color: #2e7d32;
+    }
+    
+    .audio-controls button:disabled {
+      background-color: #ccc;
+    }
+    
+    .audio-status {
+      text-align: center;
+      margin: 10px 0;
+      font-style: italic;
+      color: #555;
+      height: 20px;
+    }
+    
+    .feedback-text {
+      white-space: pre-line;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid #34a853;
+    }
+    
+    .goals-confirmation {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-radius: 4px;
+      border-left: 4px solid #4caf50;
+      display: none;
+    }
+    
+    .editable-goals {
+      margin: 15px 0;
+    }
+    
+    .editable-goal {
+      display: block;
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    .confirmation-controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    
+    .confirmation-controls button {
+      margin: 0 10px;
+    }
+    
+    #confirmGoalsButton {
+      background-color: #4caf50;
+    }
+    
+    #confirmGoalsButton:hover {
+      background-color: #43a047;
+    }
+    
+    #editGoalsButton {
+      background-color: #ff9800;
+    }
+    
+    #editGoalsButton:hover {
+      background-color: #fb8c00;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Voice Goals Input Demo</h1>
+    
+    <p>Click "Start Recording" and speak your goals (1-5). The app will automatically process them and generate a habit stack.</p>
+    
+    <div class="controls">
+      <button id="startButton">Start Recording</button>
+      <button id="stopButton" disabled>Stop Recording</button>
+    </div>
+    
+    <div class="status" id="status"></div>
+    
+    <div class="error" id="error"></div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div> Processing your goals...
+    </div>
+    
+    <div class="results">
+      <div class="transcript">
+        <h3>Transcript</h3>
+        <p id="finalTranscript"></p>
+        <p class="interim" id="interimTranscript"></p>
+      </div>
+      
+      <div class="goals">
+        <h3>Detected Goals</h3>
+        <div id="goalsConfirmation" class="goals-confirmation">
+          <p>I detected these goals. Are they correct?</p>
+          <div id="editableGoals" class="editable-goals">
+            <!-- Goals will be added here as editable inputs -->
+          </div>
+          <div class="confirmation-controls">
+            <button id="confirmGoalsButton">Yes, Proceed</button>
+            <button id="editGoalsButton">Edit Goals</button>
+          </div>
+        </div>
+        <ul id="goalsList"></ul>
+      </div>
+      
+      <div class="habit-stack">
+        <h3>Generated Habit Stack</h3>
+        <ul id="habitList"></ul>
+        
+        <div class="audio-controls">
+          <button id="playHabitButton" disabled>Play Habit Stack</button>
+          <button id="stopHabitButton" disabled>Stop Playback</button>
+        </div>
+        
+        <div class="audio-status" id="audioStatus"></div>
+        <div class="feedback-text" id="feedbackText"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import VoiceGoalsInput from './voice-goals-input.js';
+    import HabitVoiceFeedback from '/public/js/habit-voice-feedback.js';
+    
+    // DOM Elements
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const status = document.getElementById('status');
+    const finalTranscript = document.getElementById('finalTranscript');
+    const interimTranscript = document.getElementById('interimTranscript');
+    const goalsList = document.getElementById('goalsList');
+    const habitList = document.getElementById('habitList');
+    const errorElement = document.getElementById('error');
+    const loadingElement = document.getElementById('loading');
+    
+    // Confirmation elements
+    const goalsConfirmationDiv = document.getElementById('goalsConfirmation');
+    const editableGoalsDiv = document.getElementById('editableGoals');
+    const confirmGoalsButton = document.getElementById('confirmGoalsButton');
+    const editGoalsButton = document.getElementById('editGoalsButton');
+    
+    // Initialize habit voice feedback
+    const habitVoiceFeedback = new HabitVoiceFeedback({
+      playButtonId: 'playHabitButton',
+      stopButtonId: 'stopHabitButton',
+      feedbackTextId: 'feedbackText',
+      statusElementId: 'audioStatus',
+      onError: (error) => {
+        console.error('Habit voice feedback error:', error);
+        errorElement.textContent = `TTS error: ${error.message}`;
+        errorElement.style.display = 'block';
+      }
+    });
+    
+    // Initialize voice goals input
+    const voiceGoalsInput = new VoiceGoalsInput({
+      apiEndpoint: '/api/process-goals',
+      userId: 'demo_user',
+      maxGoals: 5,
+      
+      onStartListening: () => {
+        status.textContent = 'Listening...';
+        status.classList.add('recording');
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        finalTranscript.textContent = '';
+        interimTranscript.textContent = '';
+        goalsList.innerHTML = '';
+        habitList.innerHTML = '';
+        goalsConfirmationDiv.style.display = 'none';
+        errorElement.style.display = 'none';
+      },
+      
+      onStopListening: () => {
+        status.textContent = 'Stopped listening.';
+        status.classList.remove('recording');
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      },
+      
+      onResult: (result) => {
+        // Update the transcript display
+        if (result.interimTranscript) {
+          interimTranscript.textContent = result.interimTranscript;
+        }
+        
+        if (result.finalTranscript) {
+          finalTranscript.textContent += result.finalTranscript + ' ';
+        }
+        
+        // If we have the final results from the backend
+        if (result.success && result.habit_stack) {
+          loadingElement.style.display = 'none';
+          
+          // Display the habit stack
+          habitList.innerHTML = '';
+          const habitStack = result.habit_stack;
+          
+          for (let i = 1; i <= 5; i++) {
+            const habitKey = `habit_${i}`;
+            if (habitStack[habitKey]) {
+              const li = document.createElement('li');
+              li.textContent = habitStack[habitKey];
+              habitList.appendChild(li);
+            }
+          }
+          
+          // Set the habit stack for voice feedback
+          habitVoiceFeedback.setHabitStack(habitStack);
+          
+          // Auto-play the habit stack feedback
+          setTimeout(() => {
+            habitVoiceFeedback.playHabitStack();
+          }, 1000);
+        }
+      },
+      
+      onFinalResult: (result) => {
+        // Display the detected goals
+        goalsList.innerHTML = '';
+        editableGoalsDiv.innerHTML = '';
+        
+        result.goals.forEach((goal, index) => {
+          // Add to regular display
+          const li = document.createElement('li');
+          li.textContent = goal;
+          goalsList.appendChild(li);
+          
+          // Add as editable field if confirmation is required
+          if (result.requiresConfirmation) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = goal;
+            input.className = 'editable-goal';
+            input.id = `goal-${index}`;
+            editableGoalsDiv.appendChild(input);
+          }
+        });
+        
+        if (result.requiresConfirmation) {
+          // Show confirmation UI
+          goalsConfirmationDiv.style.display = 'block';
+          
+          // Read back goals for confirmation
+          const confirmationText = 'I detected these goals: ' + 
+            result.goals.map((goal, i) => `Goal ${i+1}: ${goal}`).join('. ') +
+            '. Are these correct?';
+          
+          habitVoiceFeedback.speakText(confirmationText);
+        }
+      },
+      
+      onError: (error) => {
+        status.textContent = '';
+        status.classList.remove('recording');
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        loadingElement.style.display = 'none';
+        
+        errorElement.textContent = error.message;
+        errorElement.style.display = 'block';
+        
+        console.error('Voice recognition error:', error);
+      }
+    });
+    
+    // Event listeners
+    startButton.addEventListener('click', () => {
+      voiceGoalsInput.startListening();
+    });
+    
+    stopButton.addEventListener('click', () => {
+      voiceGoalsInput.stopListening();
+    });
+    
+    // Confirmation event listeners
+    confirmGoalsButton.addEventListener('click', () => {
+      // Hide confirmation UI
+      goalsConfirmationDiv.style.display = 'none';
+      
+      // Get the goals (potentially edited)
+      const confirmedGoals = Array.from(
+        document.querySelectorAll('.editable-goal')
+      ).map(input => input.value.trim()).filter(Boolean);
+      
+      // Send the confirmed goals
+      voiceGoalsInput.sendConfirmedGoals(confirmedGoals);
+      
+      // Show loading
+      loadingElement.style.display = 'block';
+    });
+    
+    editGoalsButton.addEventListener('click', () => {
+      // Focus on first goal for editing
+      document.querySelector('.editable-goal')?.focus();
+    });
+  </script>
+</body>
+</html> 

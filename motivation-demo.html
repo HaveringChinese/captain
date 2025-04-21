@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Motivation Demo</title>
+    <style>
+        :root {
+            --primary-color: #4A6FA5;
+            --secondary-color: #166088;
+            --accent-color: #4CB5AE;
+            --light-color: #DFE9F5;
+            --dark-color: #333;
+            --success-color: #48BB78;
+            --danger-color: #F56565;
+            --neutral-color: #A0AEC0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        
+        h1, h2, h3 {
+            color: var(--secondary-color);
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--light-color);
+        }
+        
+        .habit-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .habit-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            background-color: var(--light-color);
+            transition: background-color 0.2s;
+        }
+        
+        .habit-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+        
+        .habit-streak {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin-right: 1rem;
+            font-size: 0.8rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .habit-response {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .response-button {
+            padding: 0.35rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .yes-button {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .no-button {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .skip-button {
+            background-color: var(--neutral-color);
+            color: white;
+        }
+        
+        .selected {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        
+        .btn-yes {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-yes:hover:not(:disabled) {
+            background-color: #27ae60;
+        }
+        
+        .btn-no {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-no:hover:not(:disabled) {
+            background-color: #c0392b;
+        }
+        
+        .btn-skip {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-skip:hover:not(:disabled) {
+            background-color: #7f8c8d;
+        }
+        
+        .reflection-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            resize: vertical;
+        }
+        
+        .status {
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+        }
+        
+        .feedback-container {
+            margin-top: 15px;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            background-color: #eef7fc;
+        }
+        
+        .audio-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .streak-badge {
+            background-color: #f39c12;
+            color: white;
+            border-radius: 15px;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+        
+        .selected-response {
+            border: 2px solid currentColor;
+        }
+        
+        @media (max-width: 600px) {
+            .habit-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .habit-buttons {
+                margin-top: 10px;
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Habit Tracker Motivational Feedback</h1>
+    
+    <section id="habitSection">
+        <h2>Today's Habits</h2>
+        <p>Track your habits for today to generate personalized motivational feedback:</p>
+        
+        <ul class="habit-list" id="habitList">
+            <!-- Habits will be populated by JavaScript -->
+        </ul>
+    </section>
+    
+    <section id="reflectionSection">
+        <h2>Daily Reflection</h2>
+        <p>How was your day? Share any thoughts or challenges:</p>
+        <textarea id="reflectionInput" class="reflection-input" rows="3" placeholder="Optional: Write a short reflection about your day..."></textarea>
+    </section>
+    
+    <section id="submitSection">
+        <button id="submitButton" class="btn-primary" disabled>Generate Feedback</button>
+        <p class="status" id="submitStatus"></p>
+    </section>
+    
+    <section id="feedbackSection">
+        <h2>Your Motivational Feedback</h2>
+        <div id="feedbackContainer" class="feedback-container" style="display: none;">
+            <p id="feedbackText"></p>
+            
+            <div class="audio-controls">
+                <button id="playButton" class="btn-primary" disabled>Play Feedback</button>
+                <button id="stopButton" class="btn-primary" disabled>Stop Audio</button>
+            </div>
+            <p class="status" id="audioStatus"></p>
+        </div>
+    </section>
+    
+    <script type="module">
+        // Import necessary services
+        import { TTSService, WebSpeechProvider, FishAudioProvider } from './tts-service.js';
+        import { MotivationalFeedback } from './gpt-motivational-feedback.js';
+        
+        // Sample habits for the demo
+        const sampleHabits = [
+            'Morning meditation (10 min)',
+            'Drink 8 glasses of water',
+            'Daily exercise (30 min)',
+            '10,000 steps',
+            'Read for 20 minutes'
+        ];
+        
+        // Initialize sample streak data
+        const sampleStreaks = [3, 5, 1, 0, 7];
+        
+        // State
+        const state = {
+            habits: sampleHabits,
+            responses: Array(sampleHabits.length).fill(null),
+            streaks: sampleStreaks,
+            reflection: '',
+            isGenerating: false,
+            isSpeaking: false,
+            ttsInitialized: false
+        };
+        
+        // DOM Elements
+        const elements = {
+            habitList: document.getElementById('habitList'),
+            reflectionInput: document.getElementById('reflectionInput'),
+            submitButton: document.getElementById('submitButton'),
+            submitStatus: document.getElementById('submitStatus'),
+            feedbackContainer: document.getElementById('feedbackContainer'),
+            feedbackText: document.getElementById('feedbackText'),
+            playButton: document.getElementById('playButton'),
+            stopButton: document.getElementById('stopButton'),
+            audioStatus: document.getElementById('audioStatus')
+        };
+        
+        // Initialize TTS service
+        let ttsService;
+        
+        // Function to initialize TTS service
+        async function initializeTTS() {
+            try {
+                elements.audioStatus.textContent = 'Initializing TTS service...';
+                
+                // Fetch TTS configuration from server
+                const response = await fetch('/api/tts-config');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch TTS configuration: ${response.status} ${response.statusText}`);
+                }
+                
+                const config = await response.json();
+                
+                // Initialize providers array with Web Speech provider
+                const providers = [
+                    new WebSpeechProvider({
+                        voiceName: config.webSpeechVoiceName || 'Google US English',
+                        fallbackVoiceName: config.webSpeechFallbackVoiceName || 'en-US'
+                    })
+                ];
+                
+                // Add Fish Audio provider if available in config
+                if (config.useFishAudio) {
+                    providers.push(
+                        new FishAudioProvider({
+                            proxyEndpoint: config.fishAudioEndpoint || '/api/tts/fish-audio',
+                            voiceId: config.fishAudioVoiceId
+                        })
+                    );
+                }
+                
+                // Initialize TTS service with fetched configuration
+                ttsService = new TTSService({
+                    providers: providers,
+                    defaultProvider: config.defaultProvider || 'WebSpeech',
+                    onError: (error) => {
+                        console.error('TTS error:', error);
+                        elements.audioStatus.textContent = `TTS error: ${error.message || 'Unknown error'}`;
+                    }
+                });
+                
+                elements.audioStatus.textContent = 'TTS service initialized successfully.';
+                state.ttsInitialized = true;
+                
+                // Initialize motivation feedback service with the initialized TTS service
+                initializeMotivationalFeedback();
+                
+                return ttsService;
+            } catch (error) {
+                console.error('Failed to initialize TTS service:', error);
+                elements.audioStatus.textContent = `TTS initialization error: ${error.message}`;
+                
+                // Fallback to default Web Speech provider if configuration fails
+                ttsService = new TTSService({
+                    providers: [new WebSpeechProvider()],
+                    onError: (error) => {
+                        console.error('TTS error:', error);
+                        elements.audioStatus.textContent = `TTS error: ${error.message || 'Unknown error'}`;
+                    }
+                });
+                
+                state.ttsInitialized = true;
+                
+                // Initialize motivation feedback service with the fallback TTS service
+                initializeMotivationalFeedback();
+                
+                return ttsService;
+            }
+        }
+        
+        // Separate function to initialize the motivational feedback service
+        let motivationalFeedback;
+        function initializeMotivationalFeedback() {
+            motivationalFeedback = new MotivationalFeedback({
+                ttsService,
+                onGenerationStart: () => {
+                    elements.submitStatus.textContent = 'Generating feedback...';
+                    elements.submitButton.disabled = true;
+                    state.isGenerating = true;
+                },
+                onGenerationComplete: (feedback) => {
+                    elements.submitStatus.textContent = 'Feedback generated!';
+                    elements.feedbackText.textContent = feedback;
+                    elements.feedbackContainer.style.display = 'block';
+                    elements.playButton.disabled = false;
+                    state.isGenerating = false;
+                },
+                onGenerationError: (error) => {
+                    elements.submitStatus.textContent = `Error: ${error.message}`;
+                    state.isGenerating = false;
+                    elements.submitButton.disabled = false;
+                },
+                onSpeakStart: () => {
+                    elements.audioStatus.textContent = 'Playing audio...';
+                    elements.playButton.disabled = true;
+                    elements.stopButton.disabled = false;
+                    state.isSpeaking = true;
+                },
+                onSpeakComplete: () => {
+                    elements.audioStatus.textContent = 'Audio playback complete.';
+                    elements.playButton.disabled = false;
+                    elements.stopButton.disabled = true;
+                    state.isSpeaking = false;
+                },
+                onSpeakError: (error) => {
+                    elements.audioStatus.textContent = `Audio error: ${error.message}`;
+                    elements.playButton.disabled = false;
+                    elements.stopButton.disabled = true;
+                    state.isSpeaking = false;
+                }
+            });
+        }
+        
+        // Initialize the habit list
+        function initializeHabitList() {
+            elements.habitList.innerHTML = '';
+            
+            state.habits.forEach((habit, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'habit-item';
+                
+                const habitName = document.createElement('div');
+                habitName.className = 'habit-name';
+                habitName.textContent = habit;
+                
+                // Add streak badge if applicable
+                if (state.streaks[index] > 0) {
+                    const streakBadge = document.createElement('span');
+                    streakBadge.className = 'streak-badge';
+                    streakBadge.textContent = `${state.streaks[index]} day streak`;
+                    habitName.appendChild(streakBadge);
+                }
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'habit-buttons';
+                
+                const responses = [
+                    { text: 'Yes', value: 'yes', class: 'btn-yes' },
+                    { text: 'No', value: 'no', class: 'btn-no' },
+                    { text: 'Skip', value: 'skip', class: 'btn-skip' }
+                ];
+                
+                responses.forEach(response => {
+                    const button = document.createElement('button');
+                    button.textContent = response.text;
+                    button.className = response.class;
+                    
+                    // If this response is currently selected
+                    if (state.responses[index] === response.value) {
+                        button.classList.add('selected-response');
+                    }
+                    
+                    button.addEventListener('click', () => {
+                        // Handle response selection
+                        state.responses[index] = response.value;
+                        
+                        // Update UI to show selected button
+                        buttonContainer.querySelectorAll('button').forEach(btn => {
+                            btn.classList.remove('selected-response');
+                        });
+                        button.classList.add('selected-response');
+                        
+                        // Enable submit button if all habits have responses
+                        updateSubmitButton();
+                    });
+                    
+                    buttonContainer.appendChild(button);
+                });
+                
+                listItem.appendChild(habitName);
+                listItem.appendChild(buttonContainer);
+                elements.habitList.appendChild(listItem);
+            });
+        }
+        
+        // Update submit button state based on responses
+        function updateSubmitButton() {
+            const allResponded = state.responses.every(response => response !== null);
+            elements.submitButton.disabled = !allResponded || state.isGenerating;
+        }
+        
+        // Submit habits and generate feedback
+        async function submitHabits() {
+            try {
+                // Ensure TTS service is initialized
+                if (!state.ttsInitialized) {
+                    await initializeTTS();
+                }
+                
+                // Get reflection text
+                state.reflection = elements.reflectionInput.value;
+                
+                // Generate feedback
+                await motivationalFeedback.generateFeedback({
+                    habits: state.habits,
+                    responses: state.responses,
+                    streaks: state.streaks,
+                    reflection: state.reflection
+                });
+                
+            } catch (error) {
+                console.error('Error submitting habits:', error);
+                elements.submitStatus.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        // Play feedback audio
+        async function playFeedback() {
+            try {
+                // Ensure TTS service is initialized
+                if (!state.ttsInitialized) {
+                    await initializeTTS();
+                }
+                
+                await motivationalFeedback.speakFeedback();
+            } catch (error) {
+                console.error('Error playing feedback:', error);
+                elements.audioStatus.textContent = `Error playing audio: ${error.message}`;
+            }
+        }
+        
+        // Stop feedback audio
+        function stopFeedback() {
+            if (motivationalFeedback) {
+                motivationalFeedback.stopSpeaking();
+                elements.audioStatus.textContent = 'Audio playback stopped.';
+                elements.playButton.disabled = false;
+                elements.stopButton.disabled = true;
+            }
+        }
+        
+        // Event listeners
+        function initializeEventListeners() {
+            elements.reflectionInput.addEventListener('input', () => {
+                state.reflection = elements.reflectionInput.value;
+            });
+            
+            elements.submitButton.addEventListener('click', submitHabits);
+            elements.playButton.addEventListener('click', playFeedback);
+            elements.stopButton.addEventListener('click', stopFeedback);
+        }
+        
+        // Initialize the app
+        async function init() {
+            initializeHabitList();
+            initializeEventListeners();
+            updateSubmitButton();
+            
+            // Initialize TTS service on page load
+            await initializeTTS();
+        }
+        
+        // Start the app
+        init();
+    </script>
+</body>
+</html> 

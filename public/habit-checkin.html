@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Check-in</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4cb5ae;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            padding: 1rem;
+            max-width: 100%;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        button.primary {
+            background-color: var(--primary-color);
+        }
+        
+        button.success {
+            background-color: var(--success-color);
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        #start-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        #start-button svg {
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            min-height: 3rem;
+        }
+        
+        .listening .status {
+            background-color: rgba(76, 181, 174, 0.1);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .habit-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        
+        .habit-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .habit-item.current {
+            background-color: rgba(76, 181, 174, 0.1);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .habit-item.completed {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .habit-item.skipped {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .habit-item.not-completed {
+            background-color: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .habit-checkbox {
+            margin-right: 1rem;
+        }
+        
+        .habit-text {
+            flex-grow: 1;
+        }
+        
+        .habit-status {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: var(--dark-color);
+            opacity: 0.8;
+        }
+        
+        .reflection-container {
+            margin-bottom: 2rem;
+        }
+        
+        .reflection-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .response-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .response-button {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.5rem;
+        }
+        
+        .success {
+            background-color: var(--success-color);
+        }
+        
+        .warning {
+            background-color: var(--warning-color);
+        }
+        
+        .error {
+            background-color: var(--error-color);
+        }
+        
+        .speaking-indicator {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            margin-right: 0.5rem;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 0.75rem;
+                box-shadow: none;
+            }
+            
+            button {
+                padding: 0.6rem 1.2rem;
+            }
+            
+            .habit-item {
+                padding: 0.75rem;
+            }
+            
+            .response-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Daily Habit Check-in</h1>
+        </div>
+        
+        <div class="button-container">
+            <button id="start-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+                Start Check-in
+            </button>
+        </div>
+        
+        <div id="status" class="status">
+            Ready to start your daily habit check-in.
+        </div>
+        
+        <div id="habits-container">
+            <h2>Today's Habit Stack</h2>
+            <ul id="habit-list" class="habit-list">
+                <li class="habit-item placeholder">Loading habits...</li>
+            </ul>
+            
+            <div id="manual-response" class="response-buttons hidden">
+                <button class="response-button success" data-response="yes">Yes</button>
+                <button class="response-button error" data-response="no">No</button>
+                <button class="response-button warning" data-response="skip">Skip</button>
+            </div>
+        </div>
+        
+        <div id="reflection-container" class="reflection-container hidden">
+            <h2>Daily Reflection</h2>
+            <p>Take a moment to reflect on your day and your habits:</p>
+            <textarea id="reflection-input" class="reflection-input" placeholder="Enter your reflection here..."></textarea>
+        </div>
+        
+        <div class="button-container">
+            <button id="submit-button" class="success hidden">Submit Check-in</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { TTSService, WebSpeechProvider, FishAudioProvider } from '/tts-service.js';
+        import authService from '/js/auth.js';
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize auth service
+            await authService.init();
+            
+            // Get the user ID from auth service
+            const userId = authService.getUserId();
+            
+            if (!userId) {
+                // Not logged in - show a message and disable start button
+                document.getElementById('status').textContent = 'Please log in to use the habit check-in feature';
+                document.getElementById('status').style.color = 'red';
+                document.getElementById('start-button').disabled = true;
+                return;
+            }
+            
+            const habitCheckin = new HabitCheckin({
+                startButtonId: 'start-button',
+                statusElementId: 'status',
+                habitListElementId: 'habit-list',
+                reflectionElementId: 'reflection-input',
+                submitButtonId: 'submit-button',
+                manualResponseId: 'manual-response',
+                habitsContainerId: 'habits-container',
+                reflectionContainerId: 'reflection-container',
+                userId: userId,
+                authService: authService,
+                habitStackEndpoint: '/api/habit-stack',
+                dailyLogEndpoint: '/api/daily-log'
+            });
+        });
+
+        class HabitCheckin {
+            constructor(options = {}) {
+                // API endpoints
+                this.habitStackEndpoint = options.habitStackEndpoint || '/api/habit-stack';
+                this.dailyLogEndpoint = options.dailyLogEndpoint || '/api/daily-log';
+                
+                // User identification
+                this.userId = options.userId || null;
+                this.authService = options.authService || null;
+                
+                // DOM elements
+                this.elements = {
+                    startButton: document.getElementById(options.startButtonId),
+                    statusElement: document.getElementById(options.statusElementId),
+                    habitListElement: document.getElementById(options.habitListElementId),
+                    reflectionElement: document.getElementById(options.reflectionElementId),
+                    submitButton: document.getElementById(options.submitButtonId),
+                    manualResponse: document.getElementById(options.manualResponseId),
+                    habitsContainer: document.getElementById(options.habitsContainerId),
+                    reflectionContainer: document.getElementById(options.reflectionContainerId)
+                };
+                
+                // State variables
+                this.habitStack = null;
+                this.responses = {};
+                this.currentHabitIndex = 0;
+                this.isProcessing = false;
+                this.reflection = '';
+                this.date = new Date();
+                this.ttsService = null;
+                this.recognition = null;
+                
+                // Initialize
+                this.initTTS();
+                this.initSpeechRecognition();
+                this.setupEventListeners();
+            }
+            
+            /**
+             * Initialize the TTS service
+             */
+            async initTTS() {
+                try {
+                    // Create TTS providers
+                    const webSpeechProvider = new WebSpeechProvider({
+                        voiceName: 'Google US English',
+                        fallbackVoiceName: 'en-US',
+                        rate: 1.0,
+                        pitch: 1.0,
+                        onError: (error) => this.handleError(error)
+                    });
+                    
+                    // Check if Fish Audio API is available by fetching config
+                    let fishAudioProvider = null;
+                    try {
+                        const configResponse = await fetch('/api/tts-config');
+                        if (configResponse.ok) {
+                            const config = await configResponse.json();
+                            if (config.useFishAudio) {
+                                fishAudioProvider = new FishAudioProvider({
+                                    proxyEndpoint: '/api/tts/fish-audio',
+                                    voiceId: config.fishAudioVoiceId,
+                                    onError: (error) => this.handleError(error)
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Could not fetch TTS configuration:', error);
+                    }
+                    
+                    // Initialize TTS service with available providers
+                    const providers = [webSpeechProvider];
+                    if (fishAudioProvider) {
+                        providers.push(fishAudioProvider);
+                    }
+                    
+                    this.ttsService = new TTSService({
+                        providers: providers,
+                        defaultProvider: 'WebSpeech',
+                        onError: (error) => this.handleError(error)
+                    });
+                } catch (error) {
+                    this.handleError('Failed to initialize TTS service: ' + error.message);
+                }
+            }
+            
+            /**
+             * Initialize speech recognition
+             */
+            initSpeechRecognition() {
+                // Initialize SpeechRecognition with browser compatibility
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                if (!SpeechRecognition) {
+                    this.handleError('Speech recognition is not supported in this browser');
+                    return;
+                }
+                
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+                
+                // Set up event handlers
+                this.recognition.onresult = this.handleSpeechResult.bind(this);
+                this.recognition.onerror = this.handleSpeechError.bind(this);
+                this.recognition.onend = this.handleSpeechEnd.bind(this);
+            }
+            
+            /**
+             * Setup event listeners for UI elements
+             */
+            setupEventListeners() {
+                // Start button
+                this.elements.startButton.addEventListener('click', () => this.startDailyCheck());
+                
+                // Submit button
+                this.elements.submitButton.addEventListener('click', () => this.submitDailyLog());
+                
+                // Manual response buttons
+                if (this.elements.manualResponse) {
+                    const responseButtons = this.elements.manualResponse.querySelectorAll('.response-button');
+                    responseButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            const response = button.dataset.response;
+                            this.handleManualResponse(response);
+                        });
+                    });
+                }
+            }
+            
+            /**
+             * Start the daily habit check
+             */
+            async startDailyCheck() {
+                if (this.isProcessing) return;
+                
+                this.isProcessing = true;
+                this.updateStatus('Starting daily habit check...');
+                
+                try {
+                    // Fetch habit stack for today
+                    await this.fetchHabitStack();
+                    
+                    // Reset responses
+                    this.responses = {};
+                    this.currentHabitIndex = 0;
+                    
+                    // Process first habit
+                    this.processNextHabit();
+                } catch (error) {
+                    this.handleError('Failed to start daily check: ' + error.message);
+                    this.isProcessing = false;
+                }
+            }
+            
+            /**
+             * Fetch the habit stack for today from Google Sheets via API
+             */
+            async fetchHabitStack() {
+                try {
+                    this.updateStatus('Fetching your habits for today...');
+                    
+                    const formattedDate = this.formatDate(this.date);
+                    
+                    // Set up headers for authentication
+                    const headers = { 'Content-Type': 'application/json' };
+                    
+                    // Add auth headers if auth service is available
+                    if (this.authService && typeof this.authService.getAuthHeaders === 'function') {
+                        Object.assign(headers, this.authService.getAuthHeaders());
+                    }
+                    
+                    // Use authenticated API endpoint format (no need for user_id in query)
+                    const response = await fetch(this.habitStackEndpoint, {
+                        headers,
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch habit stack');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success || !result.data || result.data.length === 0) {
+                        throw new Error('No habit stack found for today');
+                    }
+                    
+                    this.habitStack = result.data[0];
+                    
+                    // Display habit stack
+                    if (this.elements.habitListElement) {
+                        this.elements.habitListElement.innerHTML = '';
+                        for (let i = 1; i <= 5; i++) {
+                            const habitKey = `habit_${i}`;
+                            if (this.habitStack[habitKey]) {
+                                const li = document.createElement('li');
+                                li.textContent = this.habitStack[habitKey];
+                                li.dataset.habit = habitKey;
+                                li.className = 'habit-item';
+                                
+                                // Add checkbox for manual input
+                                const checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.className = 'habit-checkbox';
+                                checkbox.dataset.habit = habitKey;
+                                
+                                const habitText = document.createElement('span');
+                                habitText.className = 'habit-text';
+                                habitText.textContent = this.habitStack[habitKey];
+                                
+                                const habitStatus = document.createElement('span');
+                                habitStatus.className = 'habit-status';
+                                
+                                li.innerHTML = '';
+                                li.appendChild(checkbox);
+                                li.appendChild(habitText);
+                                li.appendChild(habitStatus);
+                                
+                                this.elements.habitListElement.appendChild(li);
+                            }
+                        }
+                    }
+                    
+                    this.updateStatus('Habits loaded for today.');
+                    return this.habitStack;
+                } catch (error) {
+                    this.handleError('Error fetching habit stack: ' + error.message);
+                    throw error;
+                }
+            }
+            
+            /**
+             * Process the next habit in the stack
+             */
+            async processNextHabit() {
+                if (!this.habitStack) {
+                    this.updateStatus('No habit stack available.');
+                    this.isProcessing = false;
+                    return;
+                }
+                
+                // Get all available habits
+                const habits = [];
+                for (let i = 1; i <= 5; i++) {
+                    const habitKey = `habit_${i}`;
+                    if (this.habitStack[habitKey]) {
+                        habits.push({ key: habitKey, text: this.habitStack[habitKey] });
+                    }
+                }
+                
+                // Check if we've processed all habits
+                if (this.currentHabitIndex >= habits.length) {
+                    // All habits processed, ask for reflection
+                    this.askForReflection();
+                    return;
+                }
+                
+                const currentHabit = habits[this.currentHabitIndex];
+                
+                // Highlight current habit in UI
+                if (this.elements.habitListElement) {
+                    const habitItems = this.elements.habitListElement.querySelectorAll('.habit-item');
+                    habitItems.forEach(item => {
+                        item.classList.remove('current');
+                        if (item.dataset.habit === currentHabit.key) {
+                            item.classList.add('current');
+                        }
+                    });
+                }
+                
+                // Show manual response buttons
+                this.elements.manualResponse.classList.remove('hidden');
+                
+                // Speak the habit
+                this.updateStatus(`Did you complete this habit today: ${currentHabit.text}? Please respond with yes, no, or skip.`);
+                
+                try {
+                    // Speak the habit with a prompt for response
+                    await this.speakText(`Did you complete this habit today: ${currentHabit.text}? Please respond with yes, no, or skip.`);
+                    
+                    // Listen for response after speech is done
+                    this.listenForResponse(currentHabit);
+                } catch (error) {
+                    this.handleError('Error processing habit: ' + error.message);
+                    // Move to next habit despite error
+                    this.currentHabitIndex++;
+                    this.processNextHabit();
+                }
+            }
+            
+            /**
+             * Listen for voice response to current habit
+             */
+            listenForResponse(currentHabit) {
+                if (!this.recognition) {
+                    this.handleError('Speech recognition not available');
+                    return;
+                }
+                
+                // Add listening indicator to status
+                document.body.classList.add('listening');
+                
+                const speakingIndicator = document.createElement('span');
+                speakingIndicator.className = 'speaking-indicator';
+                this.elements.statusElement.prepend(speakingIndicator);
+                
+                // Start listening
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    this.handleError('Error starting speech recognition: ' + error.message);
+                }
+            }
+            
+            /**
+             * Handle manual response from buttons
+             */
+            handleManualResponse(response) {
+                // Get current habit
+                const habits = [];
+                for (let i = 1; i <= 5; i++) {
+                    const habitKey = `habit_${i}`;
+                    if (this.habitStack[habitKey]) {
+                        habits.push({ key: habitKey, text: this.habitStack[habitKey] });
+                    }
+                }
+                
+                if (this.currentHabitIndex < habits.length) {
+                    const currentHabit = habits[this.currentHabitIndex];
+                    
+                    // Update UI
+                    const habitItems = this.elements.habitListElement.querySelectorAll('.habit-item');
+                    habitItems.forEach(item => {
+                        if (item.dataset.habit === currentHabit.key) {
+                            item.classList.remove('current');
+                            
+                            // Update checkbox
+                            const checkbox = item.querySelector('.habit-checkbox');
+                            if (checkbox) {
+                                checkbox.checked = response === 'yes';
+                            }
+                            
+                            // Update status text
+                            const statusText = item.querySelector('.habit-status');
+                            if (statusText) {
+                                if (response === 'yes') {
+                                    statusText.textContent = '✓ Completed';
+                                    item.classList.add('completed');
+                                } else if (response === 'no') {
+                                    statusText.textContent = '✗ Not Completed';
+                                    item.classList.add('not-completed');
+                                } else {
+                                    statusText.textContent = '⟳ Skipped';
+                                    item.classList.add('skipped');
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Store response
+                    const responseKey = `${currentHabit.key}_result`;
+                    this.responses[responseKey] = response;
+                    
+                    // Move to next habit
+                    this.currentHabitIndex++;
+                    this.processNextHabit();
+                }
+            }
+            
+            /**
+             * Handle speech recognition result
+             */
+            handleSpeechResult(event) {
+                // Stop the listening indicator
+                document.body.classList.remove('listening');
+                const indicator = this.elements.statusElement.querySelector('.speaking-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+                
+                // Process speech result
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join(' ')
+                    .toLowerCase()
+                    .trim();
+                
+                this.updateStatus(`You said: "${transcript}"`);
+                
+                // Extract response (yes, no, skip)
+                let response = 'unknown';
+                
+                if (/\byes\b|\byeah\b|\byep\b|\bdid\b|\bcompleted\b|\bdone\b/i.test(transcript)) {
+                    response = 'yes';
+                } else if (/\bno\b|\bnope\b|\bdidn't\b|\bdid not\b|\bhaven't\b|\bfailed\b/i.test(transcript)) {
+                    response = 'no';
+                } else if (/\bskip\b|\bskipped\b|\bnext\b|\bnot sure\b|\bmaybe\b|\bsometimes\b/i.test(transcript)) {
+                    response = 'skip';
+                }
+                
+                // Handle the response
+                this.handleManualResponse(response);
+            }
+            
+            /**
+             * Ask for daily reflection
+             */
+            async askForReflection() {
+                // Hide habit response buttons and show reflection container
+                this.elements.manualResponse.classList.add('hidden');
+                this.elements.reflectionContainer.classList.remove('hidden');
+                this.elements.submitButton.classList.remove('hidden');
+                
+                // Update status
+                this.updateStatus('Please share a brief reflection on your habits today.');
+                
+                // Speak the prompt
+                await this.speakText('Please share a brief reflection on your habits today.');
+                
+                // Focus the textarea
+                this.elements.reflectionElement.focus();
+            }
+            
+            /**
+             * Submit the daily log to the Google Sheets API
+             */
+            async submitDailyLog() {
+                try {
+                    this.updateStatus('Submitting your daily check-in...');
+                    
+                    // Get reflection text
+                    const reflection = this.elements.reflectionElement.value;
+                    
+                    // Prepare payload for API (no need to include user_id as it's sent via auth)
+                    const payload = {
+                        date: this.formatDate(this.date),
+                        reflection: reflection
+                    };
+                    
+                    // Add habit responses
+                    for (const [key, value] of Object.entries(this.responses)) {
+                        payload[key] = value;
+                    }
+                    
+                    // Set up headers for authentication
+                    const headers = { 'Content-Type': 'application/json' };
+                    
+                    // Add auth headers if auth service is available
+                    if (this.authService && typeof this.authService.getAuthHeaders === 'function') {
+                        Object.assign(headers, this.authService.getAuthHeaders());
+                    }
+                    
+                    // Send to API
+                    const response = await fetch(this.dailyLogEndpoint, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(payload),
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to submit daily log');
+                    }
+                    
+                    // Update UI
+                    this.updateStatus('Successfully submitted your daily check-in!');
+                    await this.speakText('Thank you! Your daily habit check-in has been successfully recorded.');
+                    
+                    // Reset state
+                    this.isProcessing = false;
+                    this.elements.submitButton.classList.add('hidden');
+                    
+                    // Reset start button
+                    this.elements.startButton.textContent = 'Start New Check-in';
+                    
+                } catch (error) {
+                    this.handleError('Error submitting daily log: ' + error.message);
+                }
+            }
+            
+            /**
+             * Speak text using TTS
+             */
+            async speakText(text) {
+                if (!this.ttsService) {
+                    await this.initTTS();
+                }
+                
+                if (!text) return;
+                
+                try {
+                    await this.ttsService.speak(text);
+                } catch (error) {
+                    this.handleError('Failed to speak text: ' + error.message);
+                }
+            }
+            
+            /**
+             * Handle speech recognition error
+             */
+            handleSpeechError(event) {
+                this.handleError('Speech recognition error: ' + event.error);
+                document.body.classList.remove('listening');
+                
+                // Remove speaking indicator
+                const indicator = this.elements.statusElement.querySelector('.speaking-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            /**
+             * Handle speech recognition end
+             */
+            handleSpeechEnd(event) {
+                document.body.classList.remove('listening');
+                
+                // Remove speaking indicator
+                const indicator = this.elements.statusElement.querySelector('.speaking-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            /**
+             * Update status message
+             */
+            updateStatus(message) {
+                if (this.elements.statusElement) {
+                    this.elements.statusElement.textContent = message;
+                }
+                console.log(message);
+            }
+            
+            /**
+             * Handle errors
+             */
+            handleError(error) {
+                console.error(error);
+                this.updateStatus('Error: ' + error);
+            }
+            
+            /**
+             * Format date as YYYY-MM-DD
+             */
+            formatDate(date) {
+                const d = new Date(date);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+        }
+    </script>
+</body>
+</html> 

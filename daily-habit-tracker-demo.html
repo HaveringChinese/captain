@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Habit Tracker Demo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .instructions {
+      background-color: #e8f5e9;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-left: 4px solid #4caf50;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    
+    button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #3367d6;
+    }
+    
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+      height: 20px;
+      color: #4285f4;
+    }
+    
+    .listening {
+      color: #ea4335;
+    }
+    
+    .habit-panel, .reflection-panel {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+    }
+    
+    h3 {
+      color: #4285f4;
+      margin-bottom: 10px;
+    }
+    
+    ul.habit-list {
+      padding-left: 20px;
+    }
+    
+    ul.habit-list li {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      border-left: 4px solid #ddd;
+      transition: all 0.3s;
+    }
+    
+    .habit-item.current {
+      background-color: #e8f0fe;
+      border-left-color: #4285f4;
+    }
+    
+    .habit-item.response-yes {
+      background-color: #e8f5e9;
+      border-left-color: #4caf50;
+    }
+    
+    .habit-item.response-no {
+      background-color: #ffebee;
+      border-left-color: #f44336;
+    }
+    
+    .habit-item.response-skip {
+      background-color: #fff8e1;
+      border-left-color: #ffca28;
+    }
+    
+    .reflection-content {
+      min-height: 60px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      font-style: italic;
+    }
+    
+    .error {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .log-panel {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Daily Habit Tracker</h1>
+    
+    <div class="instructions">
+      <p>This demo shows how to use the voice-enabled Daily Habit Tracker. Click "Start Daily Check-in" to:</p>
+      <ol>
+        <li>Fetch your habits for today from Google Sheets</li>
+        <li>Have each habit read aloud to you</li>
+        <li>Respond verbally with "yes", "no", or "skip" for each habit</li>
+        <li>Add an optional reflection at the end</li>
+        <li>Submit your daily log to Google Sheets</li>
+      </ol>
+      <p><strong>Note:</strong> You'll need to allow microphone access when prompted.</p>
+    </div>
+    
+    <div class="controls">
+      <button id="startButton">Start Daily Check-in</button>
+    </div>
+    
+    <div class="status" id="status">Ready to start your daily check-in.</div>
+    
+    <div class="error" id="error"></div>
+    
+    <div class="habit-panel">
+      <h3>Today's Habits</h3>
+      <ul id="habitList" class="habit-list">
+        <!-- Habits will be loaded here -->
+        <li class="placeholder">Your habits will appear here when you start the check-in.</li>
+      </ul>
+    </div>
+    
+    <div class="reflection-panel">
+      <h3>Your Reflection</h3>
+      <div id="reflection" class="reflection-content">
+        <!-- Reflection will be added here -->
+        <span class="placeholder">Your reflection will appear here after the habit check-in.</span>
+      </div>
+    </div>
+    
+    <div class="log-panel">
+      <h3>Activity Log</h3>
+      <div id="log">
+        <!-- Log entries will be added here -->
+      </div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import DailyHabitTracker from '/daily-habit-tracker.js';
+    
+    // DOM Elements
+    const startButton = document.getElementById('startButton');
+    const status = document.getElementById('status');
+    const errorElement = document.getElementById('error');
+    const habitList = document.getElementById('habitList');
+    const reflection = document.getElementById('reflection');
+    const logElement = document.getElementById('log');
+    
+    // Helper function to add log entries
+    function addLogEntry(message) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logElement.prepend(entry);
+    }
+    
+    // Initialize the daily habit tracker
+    const habitTracker = new DailyHabitTracker({
+      // API endpoints - these should point to your Google Apps Script web app
+      habitStackEndpoint: '/api/habit-stack',  // Endpoint to fetch habits
+      dailyLogEndpoint: '/api/daily-log',      // Endpoint to submit daily log
+      
+      // User identification
+      userId: 'demo_user',
+      
+      // DOM element IDs for UI control
+      startButtonId: 'startButton',
+      statusElementId: 'status',
+      habitListElementId: 'habitList',
+      reflectionElementId: 'reflection',
+      
+      // Event callbacks
+      onStart: () => {
+        addLogEntry('Starting daily habit check-in');
+        startButton.disabled = true;
+        errorElement.style.display = 'none';
+        habitList.innerHTML = '';
+        reflection.innerHTML = '';
+      },
+      
+      onComplete: (result) => {
+        addLogEntry(`Check-in complete. Success: ${result.success}`);
+        startButton.disabled = false;
+        
+        if (!result.success) {
+          errorElement.textContent = `Error: ${result.error}`;
+          errorElement.style.display = 'block';
+        }
+      },
+      
+      onHabitRead: (habit) => {
+        addLogEntry(`Reading habit: ${habit.text}`);
+        status.classList.add('listening');
+      },
+      
+      onHabitResponse: (habit, response) => {
+        addLogEntry(`Response for '${habit.text}': ${response}`);
+        status.classList.remove('listening');
+      },
+      
+      onStatusUpdate: (message) => {
+        addLogEntry(message);
+      },
+      
+      onError: (error) => {
+        addLogEntry(`ERROR: ${error.message}`);
+        errorElement.textContent = error.message;
+        errorElement.style.display = 'block';
+        status.classList.remove('listening');
+      }
+    });
+    
+    // For demo purposes, we'll simulate the API responses
+    // In a real implementation, you'd use your actual API endpoints
+    
+    // Mock API for demonstration purposes
+    // This would be replaced with your actual Google Sheets API integration
+    if (window.origin.includes('localhost') || window.origin.includes('127.0.0.1')) {
+      // Only set up mocks for local development
+      setupMockAPIs();
+    }
+    
+    function setupMockAPIs() {
+      // Create mock data
+      const mockHabitStack = {
+        habit_1: "Drink a glass of water first thing in the morning",
+        habit_2: "Meditate for 5 minutes",
+        habit_3: "Write down three things you're grateful for",
+        habit_4: "Stretch for 2 minutes",
+        habit_5: "Review your top priorities for the day"
+      };
+      
+      // Mock the fetch API for our endpoints
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options) {
+        if (url.includes('/api/habit-stack')) {
+          return mockHabitStackResponse(url, options);
+        } else if (url.includes('/api/daily-log')) {
+          return mockDailyLogResponse(url, options);
+        } else if (url.includes('/api/tts-config')) {
+          return mockTTSConfigResponse(url, options);
+        }
+        
+        // Pass through any other requests
+        return originalFetch(url, options);
+      };
+      
+      // Mock habit stack API response
+      function mockHabitStackResponse(url, options) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              json: () => Promise.resolve({
+                success: true,
+                habit_stack: mockHabitStack
+              })
+            });
+          }, 500);
+        });
+      }
+      
+      // Mock daily log API response
+      function mockDailyLogResponse(url, options) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const body = options && options.body ? JSON.parse(options.body) : {};
+            console.log('Daily log submission:', body);
+            
+            resolve({
+              ok: true,
+              json: () => Promise.resolve({
+                success: true,
+                message: 'Daily log recorded successfully'
+              })
+            });
+          }, 500);
+        });
+      }
+      
+      // Mock TTS config API response
+      function mockTTSConfigResponse(url, options) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              json: () => Promise.resolve({
+                useFishAudio: false, // Use Web Speech API for demo
+                fishAudioVoiceId: 'default'
+              })
+            });
+          }, 200);
+        });
+      }
+      
+      // Since we can't actually use the Fish Audio API in the demo
+      // We'll override the TTSService speak method to use Web Speech API
+      // This is only for demo purposes
+      const originalSpeak = TTSService?.prototype?.speak;
+      if (TTSService && TTSService.prototype) {
+        TTSService.prototype.speak = function(text) {
+          return new Promise((resolve, reject) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onend = resolve;
+            utterance.onerror = reject;
+            window.speechSynthesis.speak(utterance);
+          });
+        };
+      }
+      
+      // Add notice that we're using mock APIs
+      addLogEntry('DEMO MODE: Using mock APIs for demonstration purposes');
+    }
+  </script>
+</body>
+</html> 
